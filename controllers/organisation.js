@@ -68,17 +68,25 @@ exports.getOrganisationToken= function (req,res) {
     });
 };
 
-exports.checkWorking=function(req,res,decoded){
+exports.checkWorking=function(req,res){
     console.log('Hello');
-    var ans=req.value1;
-    console.log(ans);
-    console.log('same shit!');
-    res.json(decoded);
+    var ans=req.value1._doc;
+    console.log(ans.Phone);
+    var query=Organisation.find({})
+        .where('Phone',ans.Phone)
+        .select('Name Phone');
+    query.exec(function (err,organisation) {
+        if(err)
+            res.send(err);
+        else res.json(organisation);
+    })
 };
 
-exports.getOrganisationDoctors=function (req, res, decoded) {
+exports.getOrganisationDoctors=function (req, res) {
+    var organisation=req.value1._doc;
     var query=Doctor.find({});
-    query.where('Organisation',decoded._doc.Organisation);
+    query.where('Organisation').equals(organisation.Name)
+        .select('Name Specialisation Phone');
     query.exec(function (err,doctors) {
         if(err)
             res.send(err);
@@ -87,24 +95,34 @@ exports.getOrganisationDoctors=function (req, res, decoded) {
     });
 };
 
-exports.verifyOrganisationDoctors=function(req,res){
-    Doctor.findOne({Organisation:req.param('Id')},function (err, doctor) {
+exports.getOrganisationDoctor=function(req,res){
+    var orgaisation= req.value1._doc;
+    var query=Doctor.find({});
+    query.where('Organisation').equals(orgaisation.Name)
+        .where('Phone').equals(orgaisation.Phone);
+    query.exec(function (err, doctor) {
         if(err)
             res.send(err);
-        else{
-            doctor.Verified=!(doctor.Verified);
-            doctor.save(function (err) {
-                if(err)
-                    res.json({
-                        success:false
-                    });
-                else
-                    res.json({
-                        success:true
-                    });
-            });
-        }
+        else res.json(doctor);
+    })
+};
+
+exports.verifyOrganisationDoctor=function (req,res) {
+    var organisation = req.value1._doc;
+    var query = Doctor.find({});
+    query.where('Organisation').equals(organisation.Name)
+        .where('Phone').equals(req.param('Phone'));
+    query.exec(function (err, doctor) {
+        doctor.Verified = !doctor.Verified;
+        doctor.save(function (err) {
+            if (err)
+                res.send(err);
+            else res.json({
+                success: true
+            })
+        })
     });
 };
+
 
 

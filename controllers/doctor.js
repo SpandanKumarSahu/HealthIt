@@ -1,6 +1,8 @@
 var Organisation=require('../models/organisation');
 var Doctor=require('../models/doctor');
 var Patient=require('../models/patient');
+var Appointment=require('../models/appointment');
+var Medication=require('../models/medication');
 var jwt=require('jsonwebtoken');
 var uuid=require('node-uuid');
 
@@ -71,24 +73,84 @@ exports.getDoctorToken= function (req,res) {
     });
 };
 
-exports.getDoctorPatients=function (req, res) {
-    Patient.find({Doctor:req.param('Id')},function (err, patients) {
-        if(err)
-            res.send(err)
-        else
-            res.json(patients);
+exports.getDoctorAppointments=function(req,res){
+    var doctor=req.value1._doc;
+    var query=Appointment.find({});
+    query.where('Doctor').equals(doctor.Phone)
+        .exec(function (err,appointments) {
+            if(err)
+                res.send(err);
+            else{
+                var result=[];
+                var q=JSON.stringify(appointments);
+                for(var i=0;i<q.length;i++){
+                    var obj=q[i];
+                    var patient=Patient.find({}).where('Phone').equals(obj.Patient).select('Name Phone').exec(function (err,patient) {
+                        if(err) res.send(err);
+                        else return patient;
+                    });
+                    var last_date=q[i].History[q[i].History.length-1].AppointmentDate;
+                    result.push({
+                        "Name":patient.Name,
+                        "Phone":patient.Phone,
+                        "AppointmentId":q[i].AppointmentId,
+                        "LastAppointment":last_date
+                    });
+                }
+                res.json(result);
+            }
+        });
+};
+
+exports.getDoctorAppointment=function(req,res){
+    var doctor=req.value1._doc;
+    var patient=req.param('Phone');
+    var query=Appointment.find({}).where('Id').equals(req.param('AppointmentId'))
+        .exec(function (err,appointments) {
+            if(err) res.send(err);
+            else res.json(appointments);
+        });
+};
+
+exports.addMedication=function(req,res){
+    var doctor=req.value1._doc;
+    var med=new Medication();
+    med.AppointmentId=req.param('AppointmentId');
+    med.SubId=req.param('SubId');
+    var MedList=req.param('MedList');
+    MedList=JSON.stringify(MedList);
+    for(var i=0;i<MedList.length;i++){
+        var obj=MedList[i];
+        med.MedList.push(obj);
+    }
+    med.save(function (err) {
+        if(err) res.send(err);
+        else res.json({
+            success:true
+        })
     });
 };
 
-exports.DoctorResign=function (req, res) {
-    Doctor.findOne({Phone:req.param('Phone')}, function (err, doctor) {
-        if(err)
-            res.send(err);
-        else{
-            doctor.Verified=!(doctor.Verified);
-            doctor.Organisation=req.param('Organisation');
-        }
-    });
+exports.getDoctorPatients=function(req,res){
+    var doctor=req.value1._doc;
+    Patient.find({}).where('Doctor').equals(doctor.Phone)
+        .select('Phone Name Cause')
+        .exec(function (err,patients) {
+            if(err) res.send(err);
+            else res.json(patients);
+        });
 };
 
-
+exports.getDoctorPatient=function (req,res) {
+    var doctor=req.value1._doc;
+    var patient=Patient.find({}).where('Patient').equals(req.param('Phone')).exec(function (err,patient) {
+        if(err) res.send(err);
+        else return patient;
+    });
+    Appointment.find({}).where('Patient').equals(patient.Phone).select('History Cause isActive')
+        .exec(function (err, appointments) {
+            if(err)
+                res.send(err);
+            else res.json(appointments);
+        });
+};

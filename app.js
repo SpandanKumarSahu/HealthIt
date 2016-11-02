@@ -3,15 +3,8 @@ var app=express();
 var mongoose=require('mongoose');
 var bodyParser=require('body-parser');
 var jwt=require('jsonwebtoken');
-//var Appointment=require('./models/appointment');
-var Doctor=require('./models/doctor');
-//var Medication=require('./models/medication');
-var Organisation=require('./models/organisation');
-var Patient=require('./models/patient');
 var config=require('./config');
-//var AppointmentController=require('./controllers/appointment');
 var DoctorController=require('./controllers/doctor');
-//var MedicationController=require('./controllers/medication');
 var OrganisationController=require('./controllers/organisation');
 var PatientController=require('./controllers/patient');
 var passport=require('passport');
@@ -55,8 +48,7 @@ var DoctorRouter= new express.Router();
 app.use('/authenticate/organisation',OrganisationRouter);
 app.use('/authenticate/doctor',DoctorRouter);
 app.use('/authenticate/patient',PatientRouter);
-
-OrganisationRouter.use(function (req,res,next) {
+var auth=function (req,res,next) {
     var token = req.body.token || req.query.token || req.headers['x-access-token'] || req.param('Token');
     if(token){
         jwt.verify(token, req.param('Password'), function(err, decoded) {
@@ -73,48 +65,42 @@ OrganisationRouter.use(function (req,res,next) {
             message: 'No token provided.'
         });
     }
-});
+};
+OrganisationRouter.use(auth);
+DoctorRouter.use(auth);
+PatientRouter.use(auth);
 
-DoctorRouter.use(function (req,res,next) {
-    var token = req.body.token || req.query.token || req.headers['x-access-token'] || req.param('Token');
-    if(token){
-        jwt.verify(token, req.param('Password'), function(err, decoded) {
-            if (err) {
-                return res.json({ success: false, message: 'Failed to authenticate token.' });
-            } else {
-                next(decoded);
-            }
-        });
-    } else {
-        return res.status(403).send({
-            success: false,
-            message: 'No token provided.'
-        });
-    }
-});
 
-PatientRouter.use(function(req,res,next){
-    var token = req.body.token || req.query.token || req.headers['x-access-token'] || req.param('Token');
-    if(token){
-        jwt.verify(token, req.param('Password'), function(err, decoded) {
-            if (err) {
-                return res.json({ success: false, message: 'Failed to authenticate token.' });
-            } else {
-                next(decoded);
-            }
-        });
-    } else {
-        return res.status(403).send({
-            success: false,
-            message: 'No token provided.'
-        });
-    }
-});
-
-OrganisationRouter.route('/getDoctors')
+OrganisationRouter.route('/getOrganisationDoctors')
     .get(OrganisationController.getOrganisationDoctors);
+OrganisationRouter.route('/getOrganisationDoctor')
+    .get(OrganisationController.getOrganisationDoctor);
+OrganisationRouter.route('/verifyOrganisationDoctor')
+    .get(OrganisationController.verifyOrganisationDoctor);
+
+// Don't forget to delete this piece of code.
 OrganisationRouter.route('/checkWorking')
     .get(OrganisationController.checkWorking);
 
+DoctorRouter.route('/getDoctorAppointments')
+    .get(DoctorController.getDoctorAppointments);
+DoctorRouter.route('/getDoctorAppointment')
+    .get(DoctorController.getDoctorAppointment);
+DoctorRouter.route('/addMedication')
+    .post(DoctorController.addMedication);
+DoctorRouter.route('/getPatients')
+    .get(DoctorController.getDoctorPatients);
+DoctorRouter.route('/getPatientHistory')
+    .get(DoctorController.getDoctorPatient);
 
+PatientRouter.route('/getPatientAppointments')
+    .get(PatientController.getPatientAppointments);
+PatientRouter.route('/getPatientAppointment')
+    .get(PatientController.getPatientAppointment);
+PatientRouter.route('/newAppointment')
+    .post(PatientController.postAppointment);
+PatientRouter.route('/addHistory')
+    .post(PatientController.addHistory);
+PatientRouter.route('/giveFeedback')
+    .put(PatientController.giveFeedback);
 

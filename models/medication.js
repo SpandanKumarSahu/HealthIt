@@ -1,8 +1,8 @@
 var mongoose=require('mongoose');
 
 var MedicationSchema = new mongoose.Schema({
-    AppId:mongoose.Types.ObjectId,
-    SubId:mongoose.Types.ObjectId,
+    AppointmentId:String,
+    SubId:String,
     MedList:[{
         Name:String,
         Duration:Number,

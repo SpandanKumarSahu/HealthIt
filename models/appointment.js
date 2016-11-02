@@ -3,20 +3,25 @@ var Schema=mongoose.Schema;
 
 var HistorySchema= new mongoose.Schema({
     SubId:{
-        type:Schema.Types.ObjectId,
-        unique:true
+        type:String,
+        unique:true,
+        required:true
     },
     AppointmentDate:Date
 });
 
 var AppointmentSchema= new mongoose.Schema({
     Id:{
-        type:mongoose.Types.ObjectId,
-        unique:true
+        type:String,
+        unique:true,
+        required:true
     },
-    PatientId:mongoose.Types.ObjectId,
-    DoctorId:mongoose.Types.ObjectId,
-    History:[History],
+    Patient:String,
+    Doctor:String,
+    History:[{
+        type:Schema.ObjectId,
+        ref:'History'
+    }],
     Cause:String,
     isActive:Boolean,
     Feedback:String
