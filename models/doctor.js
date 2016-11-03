@@ -8,7 +8,7 @@ var DoctorSchema= new mongoose.Schema({
     },
     Email:String,
     Phone:{
-        type:Number,
+        type:String,
         required:true,
         unique:true
     },

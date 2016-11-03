@@ -121,7 +121,7 @@ exports.postAppointment=function(req,res){
     appointment.History.push(history);
     appointment.Cause=req.param('Cause');
     appointment.isActive=true;
-    appointment.Feedback="This is a moderately important appointment."
+    appointment.Feedback="This is a moderately important appointment.";
     appointment.save(function (err) {
         if(err) res.send(err);
         else res.json({
